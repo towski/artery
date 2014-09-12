@@ -20,9 +20,9 @@ func (*King) WriteToDB(msg reflect.Value){
 
 func (*King) WriteToFile(data interface{}){
     fmt.Println("Writing to file")
-    f, _ := os.Create("/tmp/dat2")
+    f, _ := os.Create("/home/towski/code/asphalt/public/index.html")
     w := bufio.NewWriter(f)
-    t, err := template.ParseFiles("/home/towski/code/sharedspace/templates/edit.html")
+    t, err := template.ParseFiles("/home/towski/code/asphalt/templates/index.html")
     _ = err
     //t = template.New("hello template") //create a new template with some name
     //t, _ = t.Parse("hello {{.Name}}!") //parse some content and generate a template, which is an internal representation

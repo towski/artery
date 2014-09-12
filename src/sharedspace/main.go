@@ -1,7 +1,7 @@
 package main
 
 import "net/http"
-import "html"
+import _ "html"
 import "time"
 import "fmt"
 import "log"
@@ -28,11 +28,15 @@ func fooHandler(){
 
 func main (){
     http.Handle("/foo", newTimeHandler("EST"))
-    http.HandleFunc("/bar", func(w http.ResponseWriter, r *http.Request) {
-        fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+    http.HandleFunc("/asphalt/foo.json", func(w http.ResponseWriter, r *http.Request) {
+        fmt.Fprintf(w, "Your changes will appear shortly")
+    })
+    http.HandleFunc("/asphalt/bar", func(w http.ResponseWriter, r *http.Request) {
+        //fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
         p := post.Post{Title: "yolo"}
         fmt.Println(p)
         post.Post_channel <- p
+        http.Redirect(w, r, "/index.html", http.StatusFound)
         //title := r.URL.Path[len("/edit/"):]
     })
     post.Init()
