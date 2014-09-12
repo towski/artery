@@ -13,7 +13,8 @@ The html is served statically, but requests to actions can trigger html file reb
 
 The DB writer lives in its own thread, so it never blocks the actions.
 
-
+```
 export GOPATH=`pwd`
 cd  src/sharedspace
 go run main.go
+```
