@@ -10,13 +10,13 @@ type King struct {
 }
 
 func (*King) WriteToDB(msg reflect.Value){
-    s := msg.Elem()
-    typeOfT := s.Type()
-    for i := 0; i < s.NumField(); i++ {
-            f := s.Field(i)
-            fmt.Printf("%d: %s %s = %v\n", i, typeOfT.Field(i).Name, f.Type(), f.Interface())
-    }
 }
+//s := msg.Elem()
+//typeOfT := s.Type()
+//for i := 0; i < s.NumField(); i++ {
+//        f := s.Field(i)
+//        fmt.Printf("%d: %s %s = %v\n", i, typeOfT.Field(i).Name, f.Type(), f.Interface())
+//}
 
 func (*King) WriteToFile(data interface{}){
     fmt.Println("Writing to file")

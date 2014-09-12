@@ -3,10 +3,13 @@ package post
 import "reflect"
 import "sharedspace/king"
 import "fmt"
+import "log"
+import "github.com/coopernurse/gorp"
 
 type Post struct {
-    king.King
     Title string
+    Id int64
+    king.King
 }
 
 func (*Post) hey(){
@@ -17,29 +20,40 @@ func (*Post) Data(){
     fmt.Println("hey")
 }
 
-func StartDBWriter(post_channel chan Post, html_channel chan Post){
+func StartDBWriter(post_channel chan *Post, html_channel chan *PostIndex, dbmap *gorp.DbMap){
     go func() {
         for msg := range post_channel {
-            fmt.Println(msg)
+            err := dbmap.Insert(msg)
+            if (err != nil){
+                fmt.Println(err)
+                log.Fatalln("no insert")
+            }
             //msg.WriteToDB(reflect.ValueOf(msg))
             _ = reflect.ValueOf(msg)
-            html_channel <- msg
+            post_index := &PostIndex{}
+            dbmap.Select(&post_index.Posts, "select * from Post order by Id")
+            html_channel <- post_index
         }
     }()
 }
 
-func StartHTMLWriter(html_channel chan Post){
+type PostIndex struct {
+    Posts []Post
+}
+
+func StartHTMLWriter(html_channel chan *PostIndex){
     go func() {
         for msg := range html_channel {
-            msg.WriteToFile(msg)
+            fmt.Println(msg)
+            (&Post{}).WriteToFile(msg)
         }
     }()
 }
 
-var Post_channel = make(chan Post)
-var Html_channel = make(chan Post)
-func Init()  {
-    StartDBWriter(Post_channel, Html_channel)
+var Post_channel = make(chan *Post)
+var Html_channel = make(chan *PostIndex)
+func Init(dbmap *gorp.DbMap)  {
+    StartDBWriter(Post_channel, Html_channel, dbmap)
     StartHTMLWriter(Html_channel)
     // Returns the user with the given id 
 }

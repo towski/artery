@@ -8,6 +8,9 @@ import "log"
 import _ "reflect"
 import _ "unsafe"
 import "sharedspace/post"
+import "database/sql"
+import _ "github.com/go-sql-driver/mysql"
+import "github.com/coopernurse/gorp"
 
 type timeHandler struct {
   zone *time.Location
@@ -26,20 +29,25 @@ func fooHandler(){
     log.Fatal("hey")
 }
 
+var db, _ = sql.Open("mysql", "root:mysql@/asphalt")
+var dbmap = &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{}}
+
 func main (){
+    dbmap.AddTableWithName(post.Post{}, "Post").SetKeys(true, "Id")
+
     http.Handle("/foo", newTimeHandler("EST"))
     http.HandleFunc("/asphalt/foo.json", func(w http.ResponseWriter, r *http.Request) {
         fmt.Fprintf(w, "Your changes will appear shortly")
     })
     http.HandleFunc("/asphalt/bar", func(w http.ResponseWriter, r *http.Request) {
         //fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-        p := post.Post{Title: "yolo"}
+        p := &post.Post{Title: "yolo"}
         fmt.Println(p)
         post.Post_channel <- p
         http.Redirect(w, r, "/index.html", http.StatusFound)
         //title := r.URL.Path[len("/edit/"):]
     })
-    post.Init()
+    post.Init(dbmap)
     log.Fatal(http.ListenAndServe(":8081", nil))
 }
 
