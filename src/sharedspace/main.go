@@ -36,10 +36,10 @@ func main (){
     dbmap.AddTableWithName(post.Post{}, "Post").SetKeys(true, "Id")
 
     http.Handle("/foo", newTimeHandler("EST"))
-    http.HandleFunc("/asphalt/foo.json", func(w http.ResponseWriter, r *http.Request) {
+    http.HandleFunc("/artery/foo.json", func(w http.ResponseWriter, r *http.Request) {
         fmt.Fprintf(w, "Your changes will appear shortly")
     })
-    http.HandleFunc("/asphalt/bar", func(w http.ResponseWriter, r *http.Request) {
+    http.HandleFunc("/artery/bar", func(w http.ResponseWriter, r *http.Request) {
         //fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
         p := &post.Post{Title: "yolo"}
         fmt.Println(p)

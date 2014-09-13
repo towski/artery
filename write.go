@@ -1,28 +1,16 @@
 package main
 
-import "os"
-import "bufio"
-import "fmt"
-import "html/template"
-import "sharedspace/post"
+import "net/rpc"
+import "log"
 
 func main(){
-    if(len(os.Args) < 2){
-        fmt.Println("Need a first argument")
-        os.Exit(0)
+    // Synchronous call
+    client, err := rpc.Dial("unix", "/tmp/build.sock")
+    if err != nil {
+        log.Fatal("dialing:", err)
     }
-    file := os.Args[1]
-    f, _ := os.Create("./public/" + file)
-    w := bufio.NewWriter(f)
-    t, err := template.ParseFiles("./templates/" + file)
-    _ = err
-
-    post := post.Post{}
-    _ = post
-
-    //t = template.New("hello template") //create a new template with some name
-    //t, _ = t.Parse("hello {{.Name}}!") //parse some content and generate a template, which is an internal representation
-    t.Execute(w, nil) //merge template ‘t’ with content of ‘p’
-    w.Flush()
-    f.Close()
+    err = client.Call("BuildServer.Build", 1, nil)
+    if err != nil {
+        log.Fatal("error:", err)
+    }
 }

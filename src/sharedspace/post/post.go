@@ -1,15 +1,17 @@
 package post
 
-import "reflect"
-import "sharedspace/king"
+import _ "reflect"
 import "fmt"
 import "log"
 import "github.com/coopernurse/gorp"
+import "net"
+import "net/rpc"
+import "os"
 
 type Post struct {
+    King
     Title string
     Id int64
-    king.King
 }
 
 func (*Post) hey(){
@@ -20,7 +22,7 @@ func (*Post) Data(){
     fmt.Println("hey")
 }
 
-func StartDBWriter(post_channel chan *Post, html_channel chan *PostIndex, dbmap *gorp.DbMap){
+func StartDBWriter(post_channel chan *Post, dbmap *gorp.DbMap){
     go func() {
         for msg := range post_channel {
             err := dbmap.Insert(msg)
@@ -29,31 +31,55 @@ func StartDBWriter(post_channel chan *Post, html_channel chan *PostIndex, dbmap 
                 log.Fatalln("no insert")
             }
             //msg.WriteToDB(reflect.ValueOf(msg))
-            _ = reflect.ValueOf(msg)
-            post_index := &PostIndex{}
-            dbmap.Select(&post_index.Posts, "select * from Post order by Id")
-            html_channel <- post_index
         }
     }()
 }
 
-type PostIndex struct {
-    Posts []Post
+type DataServer struct {
 }
 
-func StartHTMLWriter(html_channel chan *PostIndex){
-    go func() {
-        for msg := range html_channel {
-            fmt.Println(msg)
-            (&Post{}).WriteToFile(msg)
-        }
-    }()
+func (*DataServer) GetPost(id int, post *Post) error {
+    err := dbmap_global.SelectOne(post, "select * from Post where Id=?", id)
+    if (err != nil){
+        log.Println("errr %s", err)
+    }
+    log.Println("p2 row:", post)
+    return nil
+}
+
+func (*DataServer) GetPostIndex(id int, post_index *PostIndex) error {
+    dbmap_global.Select(&post_index.Posts, "select * from Post order by Id")
+    log.Println(post_index.Posts)
+    return nil
+}
+
+func StartDataServer(){
+    var rpcSocket net.Listener
+    os.Remove("/tmp/data.sock")
+	var err error
+	var conn net.Conn
+	//runtime.GOMAXPROCS(4)
+	rpc.Register(&DataServer{})
+	if rpcSocket, err = net.Listen("unix", "/tmp/data.sock"); err != nil {
+		panic(err)
+	}
+	defer rpcSocket.Close()
+	for {
+		if conn, err = rpcSocket.Accept(); err != nil {
+			panic(err)
+		}
+		go rpc.ServeConn(conn)
+	}
 }
 
 var Post_channel = make(chan *Post)
-var Html_channel = make(chan *PostIndex)
+var dbmap_global *gorp.DbMap
+var data_client *rpc.Client
 func Init(dbmap *gorp.DbMap)  {
-    StartDBWriter(Post_channel, Html_channel, dbmap)
-    StartHTMLWriter(Html_channel)
+    data_client, _ = rpc.Dial("unix", "/tmp/data.sock")
+    dbmap_global = dbmap
+    StartDBWriter(Post_channel, dbmap)
+    go StartDataServer()
+    go StartBuildServer()
     // Returns the user with the given id 
 }
