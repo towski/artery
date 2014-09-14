@@ -17,9 +17,9 @@ func WriteToFile(){
     data := PostIndex{}
     err := data_client.Call("DataServer.GetPostIndex", 1, &data)
     fmt.Println("Writing to file")
-    f, _ := os.Create("/home/towski/code/artery/public/index.html")
+    f, _ := os.Create("/home/towski/gopath/src/github.com/towski/artery/public/index.html")
     w := bufio.NewWriter(f)
-    t, err := template.ParseFiles("/home/towski/code/artery/templates/index.html")
+    t, err := template.ParseFiles("/home/towski/gopath/src/github.com/towski/artery/templates/index.html")
     _ = err
     //t = template.New("hello template") //create a new template with some name
     //t, _ = t.Parse("hello {{.Name}}!") //parse some content and generate a template, which is an internal representation

@@ -3,6 +3,8 @@ package post
 import _ "reflect"
 import "fmt"
 import "log"
+import "database/sql"
+import _ "github.com/go-sql-driver/mysql"
 import "github.com/coopernurse/gorp"
 import "net"
 import "net/rpc"
@@ -30,7 +32,7 @@ func StartDBWriter(post_channel chan *Post, dbmap *gorp.DbMap){
                 fmt.Println(err)
                 log.Fatalln("no insert")
             }
-            build_client.Go("BuildServer.Build", 1, 1, nil)
+            //build_client.Go("BuildServer.Build", 1, 1, nil)
             //msg.WriteToDB(reflect.ValueOf(msg))
         }
     }()
@@ -77,7 +79,10 @@ var Post_channel = make(chan *Post)
 var dbmap_global *gorp.DbMap
 var data_client *rpc.Client
 var build_client *rpc.Client
-func Init(dbmap *gorp.DbMap)  {
+func Init()  {
+    var db, _ = sql.Open("mysql", "root:mysql@/asphalt")
+    var dbmap = &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{}}
+    dbmap.AddTableWithName(Post{}, "Post").SetKeys(true, "Id")
     data_client, _ = rpc.Dial("unix", "/tmp/data.sock")
     build_client, _ = rpc.Dial("unix", "/tmp/build.sock")
     dbmap_global = dbmap
