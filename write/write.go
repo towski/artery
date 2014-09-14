@@ -8,12 +8,13 @@ func Client() *rpc.Client{
     if err != nil {
         log.Fatal("dialing:", err)
     }
+    return client
 }
 
 func main(){
     // Synchronous call
     client := Client()
-    err = client.Call("BuildServer.Build", 1, nil)
+    err := client.Call("BuildServer.Build", 1, nil)
     if err != nil {
         log.Fatal("error:", err)
     }
