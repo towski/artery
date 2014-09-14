@@ -6,10 +6,10 @@ import _ "os"
 import _ "bufio"
 import _ "html/template"
 
-type King struct {
+type Model struct {
 }
 
-func (*King) WriteToDB(msg reflect.Value){
+func (*Model) WriteToDB(msg reflect.Value){
 }
 //s := msg.Elem()
 //typeOfT := s.Type()

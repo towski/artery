@@ -9,7 +9,7 @@ import "net/rpc"
 import "os"
 
 type Post struct {
-    King
+    Model
     Title string
     Id int64
 }
@@ -30,6 +30,7 @@ func StartDBWriter(post_channel chan *Post, dbmap *gorp.DbMap){
                 fmt.Println(err)
                 log.Fatalln("no insert")
             }
+            build_client.Go("BuildServer.Build", 1, 1, nil)
             //msg.WriteToDB(reflect.ValueOf(msg))
         }
     }()
@@ -75,8 +76,10 @@ func StartDataServer(){
 var Post_channel = make(chan *Post)
 var dbmap_global *gorp.DbMap
 var data_client *rpc.Client
+var build_client *rpc.Client
 func Init(dbmap *gorp.DbMap)  {
     data_client, _ = rpc.Dial("unix", "/tmp/data.sock")
+    build_client, _ = rpc.Dial("unix", "/tmp/build.sock")
     dbmap_global = dbmap
     StartDBWriter(Post_channel, dbmap)
     go StartDataServer()

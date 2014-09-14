@@ -1,5 +1,5 @@
 *.swp
 public
-write
 src/github.com
 pkg
+artery

@@ -3,7 +3,7 @@ package main
 import "net/rpc"
 import "log"
 import "fmt"
-import "sharedspace/post"
+import "github.com/towski/artery/post"
 
 func main(){
     // Synchronous call
