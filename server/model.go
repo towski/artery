@@ -1,4 +1,4 @@
-package post
+package server
 
 import "reflect"
 import _ "fmt"

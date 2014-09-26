@@ -1,4 +1,4 @@
-package post
+package server
 
 import _ "reflect"
 import "fmt"
@@ -8,6 +8,7 @@ import _ "github.com/go-sql-driver/mysql"
 import "github.com/coopernurse/gorp"
 import "net"
 import "net/rpc"
+import "net/rpc/jsonrpc"
 import "os"
 
 type Post struct {
@@ -38,10 +39,7 @@ func StartDBWriter(post_channel chan *Post, dbmap *gorp.DbMap){
     }()
 }
 
-type DataServer struct {
-}
-
-func (*DataServer) GetPost(id int, post *Post) error {
+/*func (*DataServer) GetPost(id int, post *Post) error {
     err := dbmap_global.SelectOne(post, "select * from Post where Id=?", id)
     if (err != nil){
         log.Println("errr %s", err)
@@ -55,39 +53,51 @@ func (*DataServer) GetPostIndex(id int, post_index *PostIndex) error {
     log.Println(post_index.Posts)
     return nil
 }
+*/
 
-func StartDataServer(){
-    var rpcSocket net.Listener
+type DataServer struct {
+    *rpc.Server
+}
+
+func DataClient() *rpc.Client{
+    conn, err := net.Dial("unix", "/tmp/data.sock")
+    if err != nil {
+        log.Fatal("dialing:", err)
+    }
+    client := jsonrpc.NewClient(conn)
+    return client
+}
+
+func NewDataServer() (*DataServer){
     os.Remove("/tmp/data.sock")
-	var err error
-	var conn net.Conn
 	//runtime.GOMAXPROCS(4)
-	rpc.Register(&DataServer{})
-	if rpcSocket, err = net.Listen("unix", "/tmp/data.sock"); err != nil {
+    server := rpc.NewServer()
+	//server.Register(&DataServer{})
+    return &DataServer{server}
+}
+
+func (d *DataServer) Start(){
+    rpcSocket, err := net.Listen("unix", "/tmp/data.sock")
+	if err != nil {
 		panic(err)
 	}
+    //data_client, _ := rpc.Dial("unix", "/tmp/data.sock")
 	defer rpcSocket.Close()
+    log.Println("Starting data server..")
 	for {
-		if conn, err = rpcSocket.Accept(); err != nil {
+        conn, err := rpcSocket.Accept(); 
+		if err != nil {
 			panic(err)
 		}
-		go rpc.ServeConn(conn)
+		go d.ServeCodec(jsonrpc.NewServerCodec(conn))
 	}
 }
 
-var Post_channel = make(chan *Post)
-var dbmap_global *gorp.DbMap
-var data_client *rpc.Client
-var build_client *rpc.Client
-func Init()  {
+//var Post_channel = make(chan *Post)
+var Dbmap_global *gorp.DbMap
+
+func Init(){
     var db, _ = sql.Open("mysql", "root:mysql@/asphalt")
     var dbmap = &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{}}
-    dbmap.AddTableWithName(Post{}, "Post").SetKeys(true, "Id")
-    data_client, _ = rpc.Dial("unix", "/tmp/data.sock")
-    build_client, _ = rpc.Dial("unix", "/tmp/build.sock")
-    dbmap_global = dbmap
-    StartDBWriter(Post_channel, dbmap)
-    go StartDataServer()
-    go StartBuildServer()
-    // Returns the user with the given id 
+    Dbmap_global = dbmap
 }

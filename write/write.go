@@ -1,13 +1,16 @@
 package write
 
+import "net"
 import "net/rpc"
+import "net/rpc/jsonrpc"
 import "log"
 
 func Client() *rpc.Client{
-    client, err := rpc.Dial("unix", "/tmp/build.sock")
+    conn, err := net.Dial("unix", "/tmp/build.sock")
     if err != nil {
         log.Fatal("dialing:", err)
     }
+    client := jsonrpc.NewClient(conn)
     return client
 }
 
